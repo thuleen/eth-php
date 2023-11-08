@@ -12,6 +12,7 @@
 namespace Web3;
 
 use InvalidArgumentException;
+use \RuntimeException;
 use Web3\Providers\Provider;
 use Web3\Providers\HttpProvider;
 use Web3\RequestManagers\RequestManager;
@@ -469,7 +470,7 @@ class Contract
             }
             $transaction['data'] = '0x' . $this->bytecode . Utils::stripZero($data);
 
-            $this->eth->sendTransaction($transaction, function ($err, $transaction) use ($callback){
+            $this->eth->sendTransaction($transaction, function ($err, $transaction) use ($callback) {
                 if ($err !== null) {
                     return call_user_func($callback, $err, null);
                 }
@@ -564,7 +565,7 @@ class Contract
             $transaction['to'] = $this->toAddress;
             $transaction['data'] = $functionSignature . Utils::stripZero($data);
 
-            $this->eth->sendTransaction($transaction, function ($err, $transaction) use ($callback){
+            $this->eth->sendTransaction($transaction, function ($err, $transaction) use ($callback) {
                 if ($err !== null) {
                     return call_user_func($callback, $err, null);
                 }
@@ -658,7 +659,7 @@ class Contract
             $transaction['to'] = $this->toAddress;
             $transaction['data'] = $functionSignature . Utils::stripZero($data);
 
-            $this->eth->call($transaction, $defaultBlock, function ($err, $transaction) use ($callback, $function){
+            $this->eth->call($transaction, $defaultBlock, function ($err, $transaction) use ($callback, $function) {
                 if ($err !== null) {
                     return call_user_func($callback, $err, null);
                 }
@@ -708,7 +709,7 @@ class Contract
                 if (!is_string($method)) {
                     throw new InvalidArgumentException('Please make sure the method is string.');
                 }
-    
+
                 $functions = [];
                 foreach ($this->functions as $function) {
                     if ($function["name"] === $method) {
@@ -721,7 +722,7 @@ class Contract
                 if (is_callable($callback) !== true) {
                     throw new \InvalidArgumentException('The last param must be callback function.');
                 }
-    
+
                 // check the last one in arguments is transaction object
                 $argsLen = count($arguments);
                 $transaction = [];
@@ -822,7 +823,7 @@ class Contract
                 if (!is_string($method)) {
                     throw new InvalidArgumentException('Please make sure the method is string.');
                 }
-    
+
                 $functions = [];
                 foreach ($this->functions as $function) {
                     if ($function["name"] === $method) {
@@ -832,7 +833,7 @@ class Contract
                 if (count($functions) < 1) {
                     throw new InvalidArgumentException('Please make sure the method exists.');
                 }
-    
+
                 $params = $arguments;
                 $data = "";
                 $functionName = "";
@@ -856,5 +857,55 @@ class Contract
             }
             return $functionData;
         }
+    }
+
+    /**
+     * getEventLogs
+     * 
+     * @param string $eventName
+     * @param string|int $fromBlock
+     * @param string|int $toBlock
+     * @return string
+     */
+    public function getEventLogs(string $eventName, $fromBlock = 'latest', $toBlock = 'latest')
+    {
+        if ($fromBlock != 'latest') {
+            if (!is_int($fromBlock) || $fromBlock < 1) {
+                throw new InvalidArgumentException('Please make sure fromBlock is a valid block number');
+            } else if ($toBlock != 'latest' && $fromBlock > $toBlock) {
+                throw new InvalidArgumentException('Please make sure fromBlock is equal or less than toBlock');
+            }
+        }
+
+        if ($toBlock != 'latest') {
+            if (!is_int($toBlock) || $toBlock < 1) {
+                throw new InvalidArgumentException('Please make sure toBlock is a valid block number');
+            } else if ($fromBlock == 'latest') {
+                throw new InvalidArgumentException('Please make sure toBlock is equal or greater than fromBlock');
+            }
+        }
+
+        $eventSignature = $this->ethabi->encodeEventSignature($this->events[$eventName]);
+        $eventInputParametersStringArray = array_column($this->events[$eventName]['inputs'], 'type');
+
+        $this->eth->getLogs(
+            [
+                'fromBlock' => (is_int($fromBlock)) ? '0x' . dechex($fromBlock) : $fromBlock,
+                'toBlock' => (is_int($toBlock)) ? '0x' . dechex($toBlock) : $toBlock,
+                'topics' => [$eventSignature],
+                'address' => $this->toAddress
+            ],
+            function ($error, $result) use (&$output, $eventInputParametersStringArray) {
+                if ($error !== null) {
+                    throw new RuntimeException($error->getMessage());
+                }
+
+                foreach ($result as $object) {
+                    $output[] = $this->ethabi->decodeParameters($eventInputParametersStringArray, $object->data);
+                }
+            }
+        );
+
+        return $output;
     }
 }
