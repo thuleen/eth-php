@@ -1,12 +1,12 @@
 {
-    "name": "fenguoz/web3.php",
+    "name": "thuleen/web3.php",
     "description": "Ethereum web3 interface.",
     "type": "library",
     "license": "MIT",
     "authors": [
         {
-            "name": "sc0Vu",
-            "email": "alk03073135@gmail.com"
+            "name": "Thuleen",
+            "email": "azizazlan@gmail.com"
         }
     ],
     "require": {
@@ -28,5 +28,11 @@
         "psr-4": {
             "Test\\": "test/"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/thuleen/web3.php"
+        }
+    ]
 }
