@@ -1,5 +1,5 @@
 {
-    "name": "thuleen/web3.php",
+    "name": "thuleen/eth-php",
     "description": "Ethereum web3 interface.",
     "type": "library",
     "license": "MIT",
@@ -32,7 +32,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/thuleen/web3.php"
+            "url": "https://github.com/thuleen/eth-php"
         }
     ]
 }
