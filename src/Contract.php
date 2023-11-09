@@ -865,10 +865,13 @@ class Contract
      * @param string $eventName
      * @param string|int $fromBlock
      * @param string|int $toBlock
-     * @return string
+     * @return array
      */
     public function getEventLogs(string $eventName, $fromBlock = 'latest', $toBlock = 'latest')
     {
+
+        $output = [];
+
         if ($fromBlock != 'latest') {
             if (!is_int($fromBlock) || $fromBlock < 1) {
                 throw new InvalidArgumentException('Please make sure fromBlock is a valid block number');
